@@ -1,0 +1,5 @@
+rootProject.name = 'tap'
+
+
+include 'cadc-tap-server-bigquery'
+include 'tap-service-bigquery'
