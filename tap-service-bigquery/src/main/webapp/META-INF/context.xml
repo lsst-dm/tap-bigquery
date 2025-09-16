@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Context>
+
+  <WatchedResource>WEB-INF/web.xml</WatchedResource>
+
+  <Resource name="jdbc/tapuser" scope="Shareable" type="javax.sql.DataSource"
+            auth="Container"
+            url="jdbc:bigquery://https://www.googleapis.com/bigquery/v2:443;ProjectId=${gcpproject};OAuthType=3;Location=us;LogLevel=${bq_log_level};Timeout=${bq_timeout};useQueryCache=${bq_query_cache};EnableHighThroughputAPI=1;EnableSession=1;JobCreationMode=1"
+            maxActive="100"
+            maxWait="5000"
+            closeMethod="close"
+            driverClassName="com.simba.googlebigquery.jdbc42.Driver"
+            factory="org.apache.tomcat.jdbc.pool.DataSourceFactory"
+            maxIdle="10"
+            initialSize="5"
+  />
+
+  <Resource name="jdbc/tapschemauser" scope="Shareable" type="javax.sql.DataSource"
+            auth="Container"
+            url="jdbc:postgresql://127.0.0.1:5432/tap_schema"
+            username="postgres"
+            password="${postgres_password}"
+            driverClassName="org.postgresql.Driver"
+  />
+
+  <JarScanner scanClassPath="false"/>
+
+</Context>

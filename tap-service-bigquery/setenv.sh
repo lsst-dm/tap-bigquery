@@ -1,0 +1,2 @@
+JAVA_OPTS="-XX:+UseContainerSupport -XX:+IgnoreUnrecognizedVMOptions -Dgcpproject=${GCP_PROJECT} -Dsa=${BQ_SA} -Dbq_log_level=${BQ_LOG_LEVEL} -Dbq_timeout=${BQ_TIMEOUT} -Dbq_query_cache=${BQ_QUERY_CACHE}"
+CATALINA_OPTS="-Dresult_store_url=http://${EXTERNAL_IP}/resultStoreImpl -Dpostgres_password=${POSTGRES_PASSWORD}"
