@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tap-bq
+  namespace: tap-bigquery
+  labels:
+    app: tap-bq
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tap-bq
+  template:
+    metadata:
+      labels:
+        app: tap-bq
+    spec:
+      serviceAccountName: tap-sa
+      containers:
+        - name: cloud-sql-proxy
+          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.1
+          args: 
+            - "--private-ip"
+            - "--port=5432"
+            - "--structured-logs"
+            - "ppdb-dev-438721:us-central1:tap-schema"
+          securityContext:
+            runAsNonRoot: true
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "1"
+        - name: tomcat
+          image: us-central1-docker.pkg.dev/ppdb-dev-438721/tap-bigquery/tap-bq-2@sha256:da7c027988c20c16f629a51de56da5b2a39da73a6ab65c4c60a441eb4700aea1
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: "4"
+              memory: "8G"
+            requests:
+              memory: "4Gi"
+              cpu: "2"
+          env:
+            - name: GCP_PROJECT
+              value: ppdb-dev-438721
+            - name: BQ_SA
+              value: tap-sa
+            - name: BQ_LOG_LEVEL
+              value: "1"
+            - name: BQ_TIMEOUT
+              value: "1800"
+            - name: BQ_QUERY_CACHE
+              value: "1"
+            - name: EXTERNAL_IP
+              value: 35.192.145.251
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: tapschema-postgres-secret
+                  key: password
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tap-service
+  namespace: tap-bigquery
+spec:
+  selector:
+    app: tap-bq
+  loadBalancerIP: 35.192.145.251
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: LoadBalancer
+  loadBalancerSourceRanges:
+    - 216.175.18.229/32
+    - 35.232.79.62/32
+    - 34.135.212.179/32
+    - 35.225.239.81/32

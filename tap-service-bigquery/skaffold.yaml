@@ -1,0 +1,13 @@
+apiVersion: skaffold/v4beta13
+kind: Config
+metadata:
+  name: tap-service-bigquery
+build:
+  platforms: ["linux/amd64"]
+  artifacts:
+    - image: us-central1-docker.pkg.dev/ppdb-dev-438721/tap-bigquery/tap-bq-2
+      docker:
+        dockerfile: Dockerfile
+manifests:
+  rawYaml:
+    - k8s/tap-bq.yaml
