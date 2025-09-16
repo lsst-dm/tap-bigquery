@@ -462,10 +462,10 @@ public class BqRegionConverter extends RegionFinder {
 
         intersectsFunction.setName(DWITHIN_FUNCTION_NAME);
 
-        // Expression geoPoint = new Column(new Table(), "geo_point");
-        //List paramList = circleDataParams(left, geoPoint, isContains);
+        Expression geoPoint = new Column(new Table(), "geo_point");
+        List paramList = circleDataParams(left, geoPoint, isContains);
 
-        List paramList = circleDataParams(left, right, isContains);
+        //List paramList = circleDataParams(left, right, isContains);
 
         ExpressionList parameters = new ExpressionList(paramList);
         intersectsFunction.setParameters(parameters);
