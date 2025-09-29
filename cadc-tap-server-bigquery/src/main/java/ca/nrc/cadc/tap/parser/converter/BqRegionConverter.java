@@ -179,6 +179,7 @@ public class BqRegionConverter extends RegionFinder {
      */
     @Override
     protected Expression handleContains(Expression left, Expression right) {
+        
         if (isCircle(left)) {
             if (isContainsPolygon(right)) {
                 return polygonContainsCircle(right, left);
@@ -418,6 +419,9 @@ public class BqRegionConverter extends RegionFinder {
     }
 
     private List<Expression> circleDataParams(Expression left, Expression right, boolean isContains) {
+
+        Expression geoPoint = new Column(new Table(), "geo_point");
+
         if (isCircle(left)) {
             DoubleValue radius = right.toString().toLowerCase().contains("point") && isContains ?
                     new DoubleValue("0") :
@@ -426,7 +430,7 @@ public class BqRegionConverter extends RegionFinder {
             return new ArrayList<>(Arrays.asList(right, getCircleCenterPoint(left), radius));
         }
 
-        return new ArrayList<>(Arrays.asList(getCircleCenterPoint(right), left, getRadius(right)));
+        return new ArrayList<>(Arrays.asList(getCircleCenterPoint(right), geoPoint, getRadius(right)));
     }
 
     private Expression shapeContainsShape(Expression left, Expression right, String distanceFunctionName, BinaryExpression binaryExpression) {
@@ -462,14 +466,14 @@ public class BqRegionConverter extends RegionFinder {
 
         intersectsFunction.setName(DWITHIN_FUNCTION_NAME);
 
-        Expression geoPoint = new Column(new Table(), "geo_point");
-        List paramList = circleDataParams(left, geoPoint, isContains);
+        // Expression geoPoint = new Column(new Table(), "geo_point");
+        //List paramList = circleDataParams(left, geoPoint, isContains);
 
-        //List paramList = circleDataParams(left, right, isContains);
+        List paramList = circleDataParams(left, right, isContains);
 
         ExpressionList parameters = new ExpressionList(paramList);
         intersectsFunction.setParameters(parameters);
-        
+
         return intersectsFunction;
     }
 
