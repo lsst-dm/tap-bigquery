@@ -115,6 +115,7 @@ public class BqRegionConverterTest {
 
         Assert.assertEquals("ST_DWITHIN(ST_GEOGPOINT(88.0, 12.0), geo_point, 88955.94131568)",
                 resultFunctionSource);
+
     }
 
     @Test

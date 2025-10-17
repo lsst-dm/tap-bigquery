@@ -77,8 +77,8 @@ import ca.nrc.cadc.tap.parser.navigator.ReferenceNavigator;
 import ca.nrc.cadc.tap.parser.region.function.BqCircle;
 import ca.nrc.cadc.tap.parser.region.function.BqPoint;
 import ca.nrc.cadc.tap.parser.region.function.BqPolygon;
+import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.expression.*;
-import net.sf.jsqlparser.expression.ExpressionVisitor;
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
 import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
 import net.sf.jsqlparser.expression.operators.relational.GreaterThanEquals;
@@ -87,9 +87,7 @@ import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import org.apache.log4j.Logger;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class BqRegionConverter extends RegionFinder {
 
@@ -420,7 +418,31 @@ public class BqRegionConverter extends RegionFinder {
 
     private List<Expression> circleDataParams(Expression left, Expression right, boolean isContains) {
 
-        Expression geoPoint = new Column(new Table(), "geo_point");
+        LOGGER.info("Left side SQL "+ left);
+
+        // remove ST_GEOGPOINT and parenthesis
+        String point = left.toString().replace("ST_GEOGPOINT","").replace("(","").replace(")","");
+        LOGGER.info("Point " + point);
+
+        String leftTableString;
+        Expression geoPoint;
+
+        // Handle nested neighbor queries with table names
+        if (point.contains(".")) {
+            String[] table = point.split("\\.");
+            char firstChar = table[0].charAt(0);
+            if (Character.isDigit(firstChar)) {
+                leftTableString = null;
+            } else {
+                leftTableString = table[0];
+            }
+            LOGGER.info("table " + table[0]);
+            Table leftTable = new Table(null, leftTableString);
+            geoPoint = new Column(leftTable,"geo_point");
+        } else {
+            // Handle queries without table names
+            geoPoint = new Column(new Table(), "geo_point");
+        }
 
         if (isCircle(left)) {
             DoubleValue radius = right.toString().toLowerCase().contains("point") && isContains ?
@@ -431,11 +453,12 @@ public class BqRegionConverter extends RegionFinder {
         }
 
         return new ArrayList<>(Arrays.asList(getCircleCenterPoint(right), geoPoint, getRadius(right)));
+
     }
 
     private Expression shapeContainsShape(Expression left, Expression right, String distanceFunctionName, BinaryExpression binaryExpression) {
-        List<Expression> paramList = circleDataParams(left, right, true);
 
+        List<Expression> paramList = circleDataParams(left, right, true);
         int lastIndex = paramList.size() - 1;
         Expression radius = paramList.get(lastIndex);
         paramList.remove(lastIndex);
@@ -446,6 +469,7 @@ public class BqRegionConverter extends RegionFinder {
 
         return binaryExpression;
     }
+
 
     private Expression circleContainsPolygon(Expression left, Expression right) {
         MinorThanEquals minorThanEquals = new MinorThanEquals();
@@ -466,15 +490,11 @@ public class BqRegionConverter extends RegionFinder {
 
         intersectsFunction.setName(DWITHIN_FUNCTION_NAME);
 
-        // Expression geoPoint = new Column(new Table(), "geo_point");
-        //List paramList = circleDataParams(left, geoPoint, isContains);
-
         List paramList = circleDataParams(left, right, isContains);
-
         ExpressionList parameters = new ExpressionList(paramList);
         intersectsFunction.setParameters(parameters);
-
         return intersectsFunction;
+
     }
 
     private boolean isContainsPolygon(Expression expression) {
